@@ -3,23 +3,23 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Step(models.TextChoices):
-    SEED_PREPARATION = "10-seed_preparation", _("Подготовка семян")
-    SOWING = "20-sowing", _("Посев")
-    SPROUTING = "30-sprouting", _("Всходы")
-    TRANSPLANTING = "40-transplanting", _("Пересадка")
-    PLANTING_PREPARATION = "50-planting_preparation", _("Подготовка к высадке")
-    PLANTING = "60-planting", _("Высадка")
-    BLOOMING = "65-blooming", _("Цветение")
-    PINCHING_OUT = "70-pinching_out", _("Пасынкование")
-    TIE_UP = "80-tie_up", _("Подвязка")
-    HARVESTING = "90-harvesting", _("Сбор урожая")
+    SEED_PREPARATION = "10-seed_preparation", _("🌱🛠️ Подготовка семян")
+    SOWING = "20-sowing", _("🌱👐 Посев")
+    SPROUTING = "30-sprouting", _("🌱🌞 Всходы")
+    TRANSPLANTING = "40-transplanting", _("🪴🚜 Пересадка")
+    PLANTING_PREPARATION = "50-planting_preparation", _("🌿🛠️ Подготовка к высадке")
+    PLANTING = "60-planting", _("🌱🏞️ Высадка")
+    BLOOMING = "65-blooming", _("🌸🌼 Цветение")
+    PINCHING_OUT = "70-pinching_out", _("✂️🌿 Пасынкование")
+    TIE_UP = "80-tie_up", _("🌿🪢 Подвязка")
+    HARVESTING = "90-harvesting", _("🧺🍅 Сбор урожая")
 
 
 class Operation(models.TextChoices):
-    WATERING = "watering", _("Полив")
-    FERTILIZING = "fertilizing", _("Подкормка")
-    HARDENING = "hardening", _("Закаливание")
-    HILLING = "hilling", _("Окучивание")
+    WATERING = "watering", _("💦 Полив")
+    FERTILIZING = "fertilizing", _("🧪 Подкормка")
+    HARDENING = "hardening", _("❄️ Закаливание")
+    HILLING = "hilling", _("🪨 Окучивание")
 
 
 # Create your models here.

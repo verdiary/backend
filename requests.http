@@ -1,0 +1,22 @@
+@baseUrl=http://localhost:8000
+@botToken={{$dotenv BOT_TOKEN}}
+
+###
+POST https://api.telegram.org/bot{{botToken}}/setWebhook HTTP/1.1
+Content-Type: application/json
+
+{
+    "url": "https://d6d4-169-150-246-92.ngrok-free.app/bot/",
+    "secret_token": "8fd73470-886d-4fcd-9cb8-7900fd22071e"
+}
+
+###
+GET https://api.telegram.org/bot{{botToken}}/getWebhookInfo HTTP/1.1
+
+###
+POST {{baseUrl}}/bot/ HTTP/1.1
+Content-Type: application/json
+
+{
+    
+}
