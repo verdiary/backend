@@ -22,7 +22,7 @@ test:
 	$(MANAGE_PY) test
 
 shell:
-	$(MANAGE_PY) shell
+	$(MANAGE_PY) debugsqlshell
 
 superuser:
 	$(MANAGE_PY) createsuperuser
