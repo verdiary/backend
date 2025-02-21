@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiogram = "*"
+daphne = "*"
+django = "*"
+django-admin-sortable2 = "*"
+django-environ = "*"
+django-ninja = "*"
+mysqlclient = "*"
+whitenoise = "*"
+
+[dev-packages]
+black = "*"
+isort = "*"
+flake8 = "*"
+django-debug-toolbar = "*"
+
+[requires]
+python_version = "3"
