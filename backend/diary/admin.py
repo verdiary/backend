@@ -1,10 +1,9 @@
 from typing import Any, Iterator
-from django.contrib import admin
-from django.db.models.query import QuerySet
-from django.http import HttpRequest
-from django.utils.translation import gettext_lazy as _
 
 from catalogs.models import PlantStep
+from django.contrib import admin
+from django.http import HttpRequest
+from django.utils.translation import gettext_lazy as _
 
 from .models import Plant, PlantEvent
 

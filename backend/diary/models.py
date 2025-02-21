@@ -1,11 +1,10 @@
-from typing import Optional
-from django.conf import settings
-from django.db import models
 from datetime import date, timedelta
-
-from django.utils.translation import gettext_lazy as _
+from typing import Optional
 
 from catalogs.models import Step
+from django.conf import settings
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 UserModel = settings.AUTH_USER_MODEL
