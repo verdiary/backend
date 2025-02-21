@@ -1,0 +1,79 @@
+from typing import Any, Iterator
+from django.contrib import admin
+from django.db.models.query import QuerySet
+from django.http import HttpRequest
+from django.utils.translation import gettext_lazy as _
+
+from catalogs.models import PlantStep
+
+from .models import Plant, PlantEvent
+
+
+# Register your models here.
+class PlantEventInline(admin.TabularInline):
+    model = PlantEvent
+    fields = ("step", "date", "comment")
+    ordering = ["-date"]
+    extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if field is None:
+            return field
+
+        if db_field.name == "step" and hasattr(self, "cached_steps"):
+            field.choices = self.cached_steps
+
+        return field
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("step", "step__step")
+
+
+@admin.register(Plant)
+class PlantAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "name",
+        "type_name",
+        "variety_name",
+        "planned_harvest_date",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("user", "type", "variety", "created_at", "updated_at")
+    search_fields = ("name",)
+    date_hierarchy = "created_at"
+    inlines = [PlantEventInline]
+
+    @admin.display(ordering="type__name", description=_("Тип"))
+    def type_name(self, obj):
+        return obj.type
+
+    @admin.display(ordering="variety__name", description=_("Сорт"))
+    def variety_name(self, obj):
+        return obj.variety
+
+    @admin.display(ordering="planned_harvest_date", description=_("Дата сбора"))
+    def planned_harvest_date(self, obj):
+        return obj.planned_harvest_date
+
+    def save_model(self, request, obj, form, change):
+        obj.user = request.user
+        super().save_model(request, obj, form, change)
+
+    # def get_queryset(self, request: HttpRequest) -> QuerySet:
+    #     return super().get_queryset(request).prefetch_related("type", "variety", "user")
+
+    def get_formsets_with_inlines(
+        self, request: HttpRequest, obj=None
+    ) -> Iterator[Any]:
+        for inline in self.get_inline_instances(request, obj):
+            if obj is None:
+                inline.cached_steps = [(i.pk, str(i)) for i in PlantStep.objects.all()]
+            else:
+                inline.cached_steps = [
+                    (i.pk, str(i))
+                    for i in PlantStep.objects.filter(plant_type=obj.type)
+                ]
+            yield inline.get_formset(request, obj), inline
