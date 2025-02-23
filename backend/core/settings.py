@@ -41,6 +41,12 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = [
+    scheme + "://" + host
+    for host in env.list("ALLOWED_HOSTS")
+    for scheme in ["http", "https"]
+]
+
 
 INTERNAL_IPS = [
     "127.0.0.1",
