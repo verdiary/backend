@@ -33,6 +33,7 @@ class PlantTypeOperationsInline(admin.TabularInline):
 class PlantTypeAdmin(admin.ModelAdmin):
     fields = ("name", "description", "duration_days", "slug")
     list_display = ("name", "description", "slug")
+    ordering = ("name",)
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
 
@@ -44,8 +45,6 @@ class PlantVarietyAdmin(admin.ModelAdmin):
     fields = ("type", "name", "description", "duration_days", "slug")
     list_display = ("type", "name")
     list_filter = ("type",)
+    ordering = ("type__name", "name")
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = (
-        "type__name",
-        "name",
-    )
+    search_fields = ("type__name", "name")

@@ -26,7 +26,7 @@ class PlantEventInline(admin.TabularInline):
         return field
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("step", "step__step")
+        return super().get_queryset(request).prefetch_related("step")
 
 
 @admin.register(Plant)
@@ -53,7 +53,7 @@ class PlantAdmin(admin.ModelAdmin):
     def variety_name(self, obj):
         return obj.variety
 
-    @admin.display(ordering="planned_harvest_date", description=_("Дата сбора"))
+    @admin.display(description=_("Дата сбора"))
     def planned_harvest_date(self, obj):
         return obj.planned_harvest_date
 
