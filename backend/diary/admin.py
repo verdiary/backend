@@ -2,6 +2,7 @@ from typing import Any, Iterator
 
 from catalogs.models import PlantStep
 from django.contrib import admin
+from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
@@ -11,9 +12,13 @@ from .models import Plant, PlantEvent
 # Register your models here.
 class PlantEventInline(admin.TabularInline):
     model = PlantEvent
-    fields = ("step", "date", "comment")
+    fields = ("step", "description", "date", "comment")
+    readonly_fields = ("description",)
     ordering = ["-date"]
     extra = 0
+
+    def description(self, obj):
+        return obj.step.description
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -32,10 +37,10 @@ class PlantEventInline(admin.TabularInline):
 @admin.register(Plant)
 class PlantAdmin(admin.ModelAdmin):
     list_display = (
-        "user",
         "name",
         "type_name",
         "variety_name",
+        "user",
         "planned_harvest_date",
         "created_at",
         "updated_at",
@@ -61,8 +66,8 @@ class PlantAdmin(admin.ModelAdmin):
         obj.user = request.user
         super().save_model(request, obj, form, change)
 
-    # def get_queryset(self, request: HttpRequest) -> QuerySet:
-    #     return super().get_queryset(request).prefetch_related("type", "variety", "user")
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).prefetch_related("variety")
 
     def get_formsets_with_inlines(
         self, request: HttpRequest, obj=None
