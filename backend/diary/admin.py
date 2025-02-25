@@ -62,9 +62,8 @@ class PlantAdmin(admin.ModelAdmin):
     def planned_harvest_date(self, obj):
         return obj.planned_harvest_date
 
-    def save_model(self, request, obj, form, change):
-        obj.user = request.user
-        super().save_model(request, obj, form, change)
+    # def save_model(self, request, obj, form, change):
+    #     super().save_model(request, obj, form, change)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).prefetch_related("variety")

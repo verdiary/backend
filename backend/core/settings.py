@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "adminsortable2",
     "catalogs.apps.CatalogsConfig",
     "diary.apps.DiaryConfig",
+    "bot.apps.BotConfig",
 ]
 
 if DEBUG:
@@ -167,3 +168,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/app-messages"
+
+# Telegram Bot
+
+BOT_TOKEN = env("BOT_TOKEN")
