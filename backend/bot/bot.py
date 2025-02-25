@@ -2,7 +2,6 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
-from asgiref.sync import sync_to_async
 
 
 from aiogram import Bot, Dispatcher
@@ -12,6 +11,7 @@ from aiogram.filters.command import CommandStart, Command
 from aiogram.types import Message
 
 from .models import TelegramUser
+from diary.models import Plant
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,12 @@ async def start(message: Message):
 
 @dp.message(Command("myplants"))
 async def myplants(message: Message):
-    plants = await TelegramUser.objects.aget(id=message.from_user.id)
+    answer = "Ваши растения:\n\n"
 
-    await message.answer(str(plants))
+    async for plants in Plant.objects.filter(
+        user__telegramuser__id=message.from_user.id
+    ):
+        answer += f"{plants.name}\n"
+    # plants = await TelegramUser.objects.aget(id=message.from_user.id)
+
+    await message.answer(answer)
