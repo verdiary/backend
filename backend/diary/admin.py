@@ -14,7 +14,7 @@ class PlantEventInline(admin.TabularInline):
     model = PlantEvent
     fields = ("step", "description", "date", "comment")
     readonly_fields = ("description",)
-    ordering = ["-date"]
+    ordering = ["date"]
     extra = 0
 
     def description(self, obj):
@@ -63,17 +63,17 @@ class PlantAdmin(admin.ModelAdmin):
         return obj.planned_harvest_date
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        return super().get_queryset(request).prefetch_related("variety")
+        return super().get_queryset(request).select_related("type", "variety", "user")
 
     def get_formsets_with_inlines(
         self, request: HttpRequest, obj=None
     ) -> Iterator[Any]:
         for inline in self.get_inline_instances(request, obj):
-            if not obj:
+            if obj is None:
                 inline.cached_steps = []
             else:
                 inline.cached_steps = [
                     (i.pk, str(i))
-                    for i in PlantStep.objects.filter(plant_type=obj.type).all()
+                    for i in PlantStep.objects.filter(plant_type=obj.type)
                 ]
             yield inline.get_formset(request, obj), inline

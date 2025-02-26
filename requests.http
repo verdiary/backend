@@ -6,8 +6,11 @@ POST https://api.telegram.org/bot{{botToken}}/setWebhook HTTP/1.1
 Content-Type: application/json
 
 {
-    "url": "https://d6d4-169-150-246-92.ngrok-free.app/bot/",
-    "secret_token": "8fd73470-886d-4fcd-9cb8-7900fd22071e"
+    "url": "{{$dotenv WEBHOOK_URL}}",
+    "secret_token": "{{$dotenv BOT_WEBHOOK_TOKEN}}",
+    "allowed_updates": [
+      "message"
+    ]
 }
 
 ###
