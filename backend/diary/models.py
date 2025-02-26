@@ -45,6 +45,16 @@ class Plant(models.Model):
 
     @property
     def planned_harvest_date(self) -> Optional[date]:
+        # Plant.objects.annotate(
+        #     sowing_date=PlantEvent.objects.filter(
+        #         step__step=Step.SOWING, plant=models.OuterRef("pk")
+        #     ).values("date")
+        # ).annotate(
+        #     harvest_date=models.ExpressionWrapper(
+        #         models.F("sowing_date") + models.F("variety__duration_days"),
+        #         output_field=models.DateField(),
+        #     )
+        # ).values()
         sowing = self.events.get(step__step=Step.SOWING)
         if not sowing:
             return None
