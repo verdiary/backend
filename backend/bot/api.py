@@ -2,9 +2,9 @@ import logging
 from typing import Optional
 
 from aiogram.types import Update
-from django.http import HttpResponse
 from django.conf import settings
-from ninja import NinjaAPI, Header
+from django.http import HttpResponse
+from ninja import Header, NinjaAPI
 from pydantic import ValidationError
 
 from .bot import bot, dp

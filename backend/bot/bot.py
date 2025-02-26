@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -10,6 +9,8 @@ from diary.models import Plant
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .models import TelegramUser
 
@@ -20,16 +21,21 @@ dp = Dispatcher()
 bot = Bot(
     token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
+logger.info("Telegram bot initialized")
 
 
 @dp.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message) -> None:
     if not message.from_user:
+        logger.warning("Received message without user information")
         return
 
+    new_account = False
     try:
         tg_user = await TelegramUser.objects.aget(id=message.from_user.id)
+        logger.info("Existing user %s started the bot", str(tg_user))
     except TelegramUser.DoesNotExist:
+        logger.info("Creating new user for Telegram ID: %s", str(message.from_user.id))
         try:
             base_username = message.from_user.username or f"tg{message.from_user.id}"
             username = base_username
@@ -46,45 +52,84 @@ async def start(message: Message):
                     username = f"{base_username}{suffix}"
                     suffix += 1
             tg_user = await TelegramUser.objects.acreate(
-                id=message.from_user.id, user=user
+                id=message.from_user.id,
+                user=user,
+                username=username,
+                first_name=message.from_user.first_name,
+                last_name=message.from_user.last_name,
+                language_code=message.from_user.language_code,
             )
+            new_account = True
+            logger.info("Created new user %s", str(tg_user))
         except Exception as e:
-            logger.error(e)
+            logger.error("Failed to create user: %s", str(e), exc_info=True)
             await message.answer(
-                "Sorry, an error occurred while creating your account. Please try again later."
+                str(
+                    _(
+                        "Sorry, an error occurred while creating your account. Please try again later."
+                    )
+                )
             )
-            raise
+            return
 
-    await message.answer(f"Hello, {tg_user}!")
+    if new_account:
+        await message.answer(
+            str(
+                _(
+                    "Welcome, {user}! I'm your plant care assistant bot. Use /myplants to see your plants or /today to check today's tasks."
+                ).format(user=tg_user)
+            )
+        )
+    else:
+        await message.answer(str(_("Hello again, {user}!").format(user=tg_user)))
 
 
 @dp.message(Command("myplants"))
 async def myplants(message: Message):
-    answer = "Ваши растения:\n\n"
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
 
+    answer = _("Your plants:") + "\n\n"
+
+    plants_found = False
     async for plants in Plant.objects.filter(
         user__telegramuser__id=message.from_user.id
     ):
-        answer += f"{plants.name}\n"
-    # plants = await TelegramUser.objects.aget(id=message.from_user.id)
+        answer += f"🌱 {plants.name}\n"
+        plants_found = True
 
-    await message.answer(answer)
+    if not plants_found:
+        answer = _("You don't have any plants yet.")
+
+    await message.answer(str(answer))
 
 
 @dp.message(Command("today"))
 async def today(message: Message):
-    answer = "Задачи на сегодня:\n\n"
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
 
+    answer = _("Tasks for today:") + "\n\n"
+
+    tasks_found = False
     async for plant in Plant.objects.filter(
         user__telegramuser__id=message.from_user.id
     ):
-        operations = [o async for o in plant.aget_operations_at_date(date.today())]
+        operations = [
+            o async for o in plant.aget_operations_at_date(timezone.now().date())
+        ]
         if len(operations) == 0:
             continue
 
+        tasks_found = True
         answer += f"<b>{plant}:</b>\n"
         for o in operations:
-            answer += f"\t{o}\n"
+            answer += f" {o}\n"
         answer += "\n\n"
 
-    await message.answer(answer)
+    if not tasks_found:
+        answer = _("No tasks scheduled for today! 🌱")
+
+    await message.answer(str(answer))
