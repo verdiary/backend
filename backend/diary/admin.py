@@ -62,9 +62,6 @@ class PlantAdmin(admin.ModelAdmin):
     def planned_harvest_date(self, obj):
         return obj.planned_harvest_date
 
-    # def save_model(self, request, obj, form, change):
-    #     super().save_model(request, obj, form, change)
-
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).prefetch_related("variety")
 
@@ -72,8 +69,11 @@ class PlantAdmin(admin.ModelAdmin):
         self, request: HttpRequest, obj=None
     ) -> Iterator[Any]:
         for inline in self.get_inline_instances(request, obj):
-            if obj is None:
-                inline.cached_steps = [(i.pk, str(i)) for i in PlantStep.objects.all()]
+            if not obj:
+                inline.cached_steps = []
             else:
-                inline.cached_steps = [(i.pk, str(i)) for i in PlantStep.objects.all()]
+                inline.cached_steps = [
+                    (i.pk, str(i))
+                    for i in PlantStep.objects.filter(plant_type=obj.type).all()
+                ]
             yield inline.get_formset(request, obj), inline
