@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
-from catalogs.models import Step
+from catalogs.models import PlantOperation, Step
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -51,6 +51,41 @@ class Plant(models.Model):
 
         return sowing.date + timedelta(days=self.duration_days)
 
+    async def aget_operations_at_date(self, today: date):
+        events = [
+            s
+            async for s in PlantEvent.objects.filter(plant=self)
+            .prefetch_related("step")
+            .all()
+        ]
+
+        operations = [
+            o
+            async for o in PlantOperation.objects.filter(
+                plant_type=self.type_id, since_step__in=[x.step.step for x in events]
+            )
+            .exclude(until_step__in=[x.step.step for x in events])
+            .all()
+        ]
+
+        events = {e.step.step: e for e in events}
+        for operation in operations:
+            related_event = events[operation.since_step]
+
+            start_date = related_event.date  # type: date
+            if operation.delay_days:
+                start_date += timedelta(days=operation.delay_days)
+
+            if start_date > today:
+                continue
+
+            days = (today - start_date).days
+            if operation.duration_days and days > operation.duration_days:
+                continue
+
+            if days % operation.interval_days == 0:
+                yield operation
+
     def get_operations_at_date(self, today: date):
         operations = self.type.operations.exclude(
             until_step__in=self.events.values_list("step")
@@ -68,7 +103,7 @@ class Plant(models.Model):
                 continue
 
             days = (today - start_date).days
-            if operation.duration and days > operation.duration:
+            if operation.duration_days and days > operation.duration_days:
                 continue
 
             if days % operation.interval_days == 0:
