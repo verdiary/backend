@@ -43,8 +43,11 @@ class PlantTypeAdmin(admin.ModelAdmin):
 @admin.register(PlantVariety)
 class PlantVarietyAdmin(admin.ModelAdmin):
     fields = ("type", "name", "description", "duration_days", "slug")
-    list_display = ("type", "name")
+    list_display = ("full_name", "type")
     list_filter = ("type",)
     ordering = ("type__name", "name")
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("type__name", "name")
+
+    def full_name(self, obj):
+        return f"{obj.type.name} {obj.name}"
