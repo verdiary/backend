@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from aiogram.types import Update
+from aiogram.dispatcher.event.bases import UNHANDLED, REJECTED
 from django.conf import settings
 from django.http import HttpResponse
 from ninja import Header, NinjaAPI
@@ -29,7 +30,16 @@ async def index(
 
     try:
         update = Update.model_validate_json(request.body)
-        return await dp.feed_update(bot, update)
+        response = await dp.feed_update(bot, update)
+        if response is UNHANDLED:
+            logger.warning("Unhandled update: %s", update)
+            return HttpResponse("", status=200)
+
+        if response is REJECTED:
+            logger.warning("Rejected update: %s", update)
+            return HttpResponse("", status=200)
+
+        return response
     except ValidationError as e:
         logger.error("Invalid request", exc_info=True)
         return HttpResponse(e.json(), status=400, content_type="application/json")
