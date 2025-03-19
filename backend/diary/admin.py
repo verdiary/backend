@@ -6,10 +6,20 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from .models import Plant, PlantEvent
+from .models import Plant, PlantEvent, Profile
 
 
 # Register your models here.
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "timezone")
+    list_filter = ("timezone",)
+    search_fields = ("user__username", "user__email")
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).select_related("user")
+
+
 class PlantEventInline(admin.TabularInline):
     model = PlantEvent
     fields = ("step", "description", "date", "comment")
