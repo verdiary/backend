@@ -12,6 +12,7 @@ django-environ = "*"
 django-ninja = "*"
 mysqlclient = "*"
 whitenoise = "*"
+django-timezone-field = "*"
 
 [dev-packages]
 black = "*"

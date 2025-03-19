@@ -5,9 +5,31 @@ from catalogs.models import PlantOperation, Step
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from timezone_field import TimeZoneField
 
 # Create your models here.
 UserModel = settings.AUTH_USER_MODEL
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(
+        UserModel,
+        verbose_name=_("Пользователь"),
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    timezone = TimeZoneField(
+        verbose_name=_("Часовой пояс"),
+        blank=True,
+        null=True,
+    )
+
+    def __str__(self):
+        return f"{self.user}"
+
+    class Meta:
+        verbose_name = _("Профиль")
+        verbose_name_plural = _("Профили")
 
 
 class Plant(models.Model):

@@ -12,6 +12,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .middlewares import UserMiddleware
 from .models import TelegramUser
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ bot = Bot(
     token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 logger.info("Telegram bot initialized")
+
+dp.message.middleware(UserMiddleware())
 
 
 @dp.message(CommandStart())
@@ -118,7 +121,7 @@ async def today(message: Message):
         user__telegramuser__id=message.from_user.id
     ):
         operations = [
-            o async for o in plant.aget_operations_at_date(timezone.now().date())
+            o async for o in plant.aget_operations_at_date(timezone.localdate())
         ]
         if len(operations) == 0:
             continue
