@@ -67,11 +67,11 @@ class Plant(models.Model):
 
     @property
     def planned_harvest_date(self) -> Optional[date]:
-        sowing = self.events.get(step__step=Step.SOWING)
-        if not sowing:
+        sprouting = self.events.get(step__step=Step.SPROUTING)
+        if not sprouting:
             return None
 
-        return sowing.date + timedelta(days=self.duration_days)
+        return sprouting.date + timedelta(days=self.duration_days)
 
     async def aget_operations_at_date(self, today: date):
         events = [
