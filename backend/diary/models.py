@@ -1,11 +1,15 @@
+import logging
 from datetime import date, timedelta
 from typing import Optional
 
 from catalogs.models import PlantOperation, Step
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from timezone_field import TimeZoneField
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 UserModel = settings.AUTH_USER_MODEL
@@ -144,6 +148,53 @@ class Plant(models.Model):
                 self.name += f" {self.variety.name}"
             self.name += f" ({date.today().strftime('%Y-%m-%d')})"
         super().save(*args, **kwargs)
+
+    @property
+    def planting_period(self):
+        if self.variety and self.variety.planting_period:
+            return self.variety.planting_period
+        return self.type.planting_period
+
+    @cached_property
+    def parsed_planting_period(self):
+        """
+        Parses the planting_period string in 'DD.MM-DD.MM' format into a tuple of start and end dates.
+
+        Returns:
+            tuple: A tuple containing the start and end dates as datetime.date objects, or None if parsing fails.
+        """
+        period = self.planting_period
+        if not period:
+            return None
+
+        romanian_months = {
+            "I": 1,
+            "II": 2,
+            "III": 3,
+            "IV": 4,
+            "V": 5,
+            "VI": 6,
+            "VII": 7,
+            "VIII": 8,
+            "IX": 9,
+            "X": 10,
+            "XI": 11,
+            "XII": 12,
+        }
+
+        try:
+            start_str, end_str = period.split("-")
+            start_day, start_month = start_str.split(".")
+            end_day, end_month = end_str.split(".")
+
+            today = date.today()
+            start_date = date(today.year, romanian_months[start_month], int(start_day))
+            end_date = date(today.year, romanian_months[end_month], int(end_day))
+
+            return start_date, end_date
+        except (ValueError, KeyError):
+            logger.warning("Failed to parse planting period for plant %s", self.id)
+            return None
 
     def __str__(self):
         return f"{self.name}"
