@@ -136,3 +136,38 @@ async def today(message: Message):
         answer = _("No tasks scheduled for today! 🌱")
 
     await message.answer(str(answer))
+
+
+@dp.message(Command("planting"))
+async def planting(message: Message):
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
+
+    answer = _("Your future plantings:") + "\n\n"
+
+    plants_found = False
+    today = timezone.localdate()
+    async for plant in (
+        Plant.objects.filter(user__telegramuser__id=message.from_user.id)
+        .select_related("type", "variety")
+        .prefetch_related("events")
+        .all()
+    ):
+        parsed_period = plant.parsed_planting_period
+        if parsed_period is None:
+            continue
+
+        _start_date, end_date = parsed_period
+        if end_date < today:
+            continue
+
+        plants_found = True
+        answer += f"🌱 {plant.name}\n"
+        answer += f"  {_('Planned planting period')}: {plant.planting_period}\n"
+        # answer += f"  {_('Planned harvest date')}: {plant.planned_harvest_date}\n\n"
+
+    if not plants_found:
+        answer = _("You don't have any plants yet.")
+
+    await message.answer(str(answer))

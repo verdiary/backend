@@ -50,8 +50,9 @@ class PlantAdmin(admin.ModelAdmin):
         "name",
         "type_name",
         "variety_name",
-        "user",
+        "planting_period",
         "planned_harvest_date",
+        "user",
         "created_at",
         "updated_at",
     )

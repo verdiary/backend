@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -29,6 +30,21 @@ class PlantType(models.Model):
     name = models.CharField(verbose_name=_("Наименование"), max_length=128)
     description = models.TextField(verbose_name=_("Описание"))
 
+    planting_period = models.CharField(
+        verbose_name=_("Период высадки"),
+        max_length=16,
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)-(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$",
+                message=_(
+                    "Неверный формат периода высадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
+                ),
+            ),
+        ],
+    )
+
     duration_days = models.IntegerField(verbose_name=_("Срок созревания (дн.)"))
 
     class Meta:
@@ -52,6 +68,21 @@ class PlantVariety(models.Model):
     slug = models.SlugField(verbose_name=_("Код"))
     name = models.CharField(verbose_name=_("Наименование"), max_length=128)
     description = models.TextField(verbose_name=_("Описание"))
+
+    planting_period = models.CharField(
+        verbose_name=_("Период высадки"),
+        max_length=16,
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)-(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$",
+                message=_(
+                    "Неверный формат периода высадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
+                ),
+            ),
+        ],
+    )
 
     duration_days = models.IntegerField(verbose_name=_("Срок созревания (дн.)"))
 
