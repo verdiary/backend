@@ -144,28 +144,32 @@ async def planting(message: Message):
         logger.warning("Received message without user information")
         return
 
-    answer = _("Your future plantings:") + "\n\n"
+    answer = _("Your future plantings:") + "\n"
 
     plants_found = False
-    today = timezone.localdate()
-    async for plant in (
+    now = timezone.localdate()
+    plants = (
         Plant.objects.filter(user__telegramuser__id=message.from_user.id)
         .select_related("type", "variety")
         .prefetch_related("events")
         .all()
+    )
+
+    for plant in sorted(
+        [p async for p in plants],
+        key=lambda p: p.parsed_planting_period[0] if p.parsed_planting_period else now,
     ):
         parsed_period = plant.parsed_planting_period
         if parsed_period is None:
             continue
 
-        _start_date, end_date = parsed_period
-        if end_date < today:
+        start_date, end_date = parsed_period
+        if end_date < now:
             continue
 
         plants_found = True
-        answer += f"🌱 {plant.name}\n"
+        answer += f"\n🌱 {plant.name}\n"
         answer += f"  {_('Planned planting period')}: {plant.planting_period}\n"
-        # answer += f"  {_('Planned harvest date')}: {plant.planned_harvest_date}\n\n"
 
     if not plants_found:
         answer = _("You don't have any plants yet.")
