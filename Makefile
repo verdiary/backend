@@ -12,6 +12,9 @@ all: migrations migrate run
 run:
 	$(MANAGE_PY) runserver
 
+bot:
+	$(MANAGE_PY) runbot
+
 migrations:
 	$(MANAGE_PY) makemigrations
 
@@ -50,4 +53,4 @@ docker-build:
 docker-run: docker-build
 	docker run --rm -p 8000:8000 -e ALLOWED_HOSTS='*' --name $(PROJECT_NAME) $(PROJECT_NAME)
 
-.PHONY: all run migrations migrate test shell superuser check format lint clean docker-build docker-run
+.PHONY: all run bot migrations migrate test shell superuser check format lint clean docker-build docker-run
