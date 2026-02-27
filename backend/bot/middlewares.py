@@ -27,6 +27,8 @@ class UserMiddleware(BaseMiddleware):
             else:
                 timezone.deactivate()
         except UserModel.DoesNotExist:
+            data["user"] = None
+            data["profile"] = None
             return await handler(event, data)
 
         data["user"] = user
