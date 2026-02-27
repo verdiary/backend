@@ -200,6 +200,47 @@ class Plant(models.Model):
         return f"{self.name}"
 
 
+class SeedStock(models.Model):
+    user = models.ForeignKey(
+        UserModel,
+        verbose_name=_("Пользователь"),
+        on_delete=models.CASCADE,
+        related_name="seed_stocks",
+    )
+    type = models.ForeignKey(
+        "catalogs.PlantType",
+        verbose_name=_("Тип"),
+        on_delete=models.RESTRICT,
+        related_name="seed_stocks",
+    )
+    variety = models.ForeignKey(
+        "catalogs.PlantVariety",
+        verbose_name=_("Сорт"),
+        on_delete=models.RESTRICT,
+        related_name="seed_stocks",
+        null=True,
+        blank=True,
+    )
+    quantity = models.PositiveIntegerField(verbose_name=_("Количество семян"), default=0)
+
+    class Meta:
+        verbose_name = _("Запас семян")
+        verbose_name_plural = _("Запасы семян")
+        unique_together = ("user", "type", "variety")
+        ordering = ("type__name", "variety__name")
+
+    def save(self, *args, **kwargs):
+        if self.variety:
+            self.type = self.variety.type
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        name = self.type.name
+        if self.variety:
+            name += f" {self.variety.name}"
+        return f"{name}: {self.quantity}"
+
+
 class PlantEvent(models.Model):
     plant = models.ForeignKey(
         Plant,
