@@ -5,9 +5,11 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters.command import Command, CommandStart
 from aiogram.types import Message
-from diary.models import Plant
+from catalogs.models import PlantType, PlantVariety
+from diary.models import Plant, SeedStock
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import F
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -79,7 +81,7 @@ async def start(message: Message) -> None:
         await message.answer(
             str(
                 _(
-                    "Welcome, {user}! I'm your plant care assistant bot. Use /myplants to see your plants or /today to check today's tasks."
+                    "Welcome, {user}! I'm your plant care assistant bot. Use /seeds to view seed stock, /addseeds <type_slug> <quantity> [variety_slug] to add seeds, /plant <seed_stock_id> to plant from stock, /myplants to see your plants, or /today to check today's tasks."
                 ).format(user=tg_user)
             )
         )
@@ -136,6 +138,154 @@ async def today(message: Message):
         answer = _("No tasks scheduled for today! 🌱")
 
     await message.answer(str(answer))
+
+
+@dp.message(Command("seeds"))
+async def seeds(message: Message):
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
+
+    answer = _("Your seed stock:") + "\n\n"
+    found = False
+
+    stocks = (
+        SeedStock.objects.filter(
+            user__telegramuser__id=message.from_user.id, quantity__gt=0
+        )
+        .select_related("type", "variety")
+        .order_by("type__name", "variety__name")
+    )
+
+    async for stock in stocks:
+        found = True
+        plant_name = stock.type.name
+        if stock.variety:
+            plant_name += f" {stock.variety.name}"
+        answer += f"{stock.id}. 🌱 {plant_name} — {stock.quantity}\n"
+
+    if not found:
+        answer = _("Your seed stock is empty.")
+    else:
+        answer += "\n" + _(
+            "Use /addseeds <type_slug> <quantity> <variety_slug> to add seeds."
+        )
+        answer += "\n" + _("Use /plant <seed_stock_id> to plant one seed.")
+
+    await message.answer(str(answer))
+
+
+@dp.message(Command("addseeds"))
+async def add_seeds(message: Message):
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
+
+    parts = (message.text or "").split()
+    if len(parts) != 4 or not parts[2].isdigit():
+        await message.answer(
+            str(_("Usage: /addseeds <type_slug> <quantity> <variety_slug>"))
+        )
+        return
+
+    type_slug = parts[1].strip().lower()
+    quantity = int(parts[2].strip())
+    variety_slug = parts[3].strip().lower()
+
+    if quantity <= 0:
+        await message.answer(str(_("Quantity must be greater than 0.")))
+        return
+
+    try:
+        plant_type = await PlantType.objects.aget(slug=type_slug)
+    except PlantType.DoesNotExist:
+        await message.answer(str(_("Plant type not found.")))
+        return
+
+    try:
+        variety = await PlantVariety.objects.aget(type=plant_type, slug=variety_slug)
+    except PlantVariety.DoesNotExist:
+        await message.answer(str(_("Plant variety not found for this type.")))
+        return
+
+    tg_user = await TelegramUser.objects.select_related("user").aget(
+        id=message.from_user.id
+    )
+
+    stock_qs = SeedStock.objects.filter(
+        user=tg_user.user,
+        type=plant_type,
+        variety=variety,
+    )
+    updated = await stock_qs.aupdate(quantity=F("quantity") + quantity)
+
+    if updated == 0:
+        try:
+            await SeedStock.objects.acreate(
+                user=tg_user.user,
+                type=plant_type,
+                variety=variety,
+                quantity=quantity,
+            )
+        except IntegrityError:
+            # Row was inserted concurrently; apply increment to the existing row.
+            await stock_qs.aupdate(quantity=F("quantity") + quantity)
+
+    stock = await stock_qs.select_related("type", "variety").aget()
+
+    plant_name = stock.type.name
+    if stock.variety:
+        plant_name += f" {stock.variety.name}"
+
+    await message.answer(
+        str(
+            _("Added {count} seeds to stock: {plant_name}. Total: {total}.").format(
+                count=quantity,
+                plant_name=plant_name,
+                total=stock.quantity,
+            )
+        )
+    )
+
+
+@dp.message(Command("plant"))
+async def plant_from_seed_stock(message: Message):
+    if not message.from_user:
+        logger.warning("Received message without user information")
+        return
+
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) < 2 or not parts[1].strip().isdigit():
+        await message.answer(str(_("Usage: /plant <seed_stock_id>")))
+        return
+
+    stock_id = int(parts[1].strip())
+
+    try:
+        stock = await SeedStock.objects.select_related("type", "variety").aget(
+            id=stock_id, user__telegramuser__id=message.from_user.id
+        )
+    except SeedStock.DoesNotExist:
+        await message.answer(str(_("Seed stock not found.")))
+        return
+
+    if stock.quantity <= 0:
+        await message.answer(str(_("This seed stock is empty.")))
+        return
+
+    plant = Plant(user=stock.user, type=stock.type, variety=stock.variety)
+    await plant.asave()
+
+    stock.quantity -= 1
+    await stock.asave(update_fields=["quantity"])
+
+    await message.answer(
+        str(
+            _("Planted: {plant_name}. Remaining seeds: {quantity}.").format(
+                plant_name=plant.name, quantity=stock.quantity
+            )
+        )
+    )
 
 
 @dp.message(Command("planting"))
