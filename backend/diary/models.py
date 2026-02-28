@@ -149,21 +149,8 @@ class Plant(models.Model):
             self.name += f" ({date.today().strftime('%Y-%m-%d')})"
         super().save(*args, **kwargs)
 
-    @property
-    def planting_period(self):
-        if self.variety and self.variety.planting_period:
-            return self.variety.planting_period
-        return self.type.planting_period
-
-    @cached_property
-    def parsed_planting_period(self):
-        """
-        Parses the planting_period string in 'DD.MM-DD.MM' format into a tuple of start and end dates.
-
-        Returns:
-            tuple: A tuple containing the start and end dates as datetime.date objects, or None if parsing fails.
-        """
-        period = self.planting_period
+    @staticmethod
+    def _parse_period(period: Optional[str], plant_id: Optional[int], period_name: str):
         if not period:
             return None
 
@@ -193,8 +180,30 @@ class Plant(models.Model):
 
             return start_date, end_date
         except (ValueError, KeyError):
-            logger.warning("Failed to parse planting period for plant %s", self.id)
+            logger.warning(
+                "Failed to parse %s for plant %s", period_name, plant_id
+            )
             return None
+
+    @property
+    def sowing_period(self):
+        if self.variety and self.variety.sowing_period:
+            return self.variety.sowing_period
+        return self.type.sowing_period
+
+    @cached_property
+    def parsed_sowing_period(self):
+        return self._parse_period(self.sowing_period, self.id, "sowing period")
+
+    @property
+    def planting_period(self):
+        if self.variety and self.variety.planting_period:
+            return self.variety.planting_period
+        return self.type.planting_period
+
+    @cached_property
+    def parsed_planting_period(self):
+        return self._parse_period(self.planting_period, self.id, "planting period")
 
     def __str__(self):
         return f"{self.name}"
