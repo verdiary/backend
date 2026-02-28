@@ -81,7 +81,7 @@ async def start(message: Message) -> None:
         await message.answer(
             str(
                 _(
-                    "Welcome, {user}! I'm your plant care assistant bot. Use /seeds to view seed stock, /addseeds <type_slug> <quantity> [variety_slug] to add seeds, /plant <id> to plant from stock, /myplants to see your plants, or /today to check today's tasks."
+                    "Welcome, {user}! I'm your plant care assistant bot. Use /seeds to view seed stock, /addseeds <type_slug> <quantity> [variety_slug] to add seeds, /plant <seed_stock_id> to plant from stock, /myplants to see your plants, or /today to check today's tasks."
                 ).format(user=tg_user)
             )
         )
@@ -140,8 +140,6 @@ async def today(message: Message):
     await message.answer(str(answer))
 
 
-
-
 @dp.message(Command("seeds"))
 async def seeds(message: Message):
     if not message.from_user:
@@ -175,8 +173,6 @@ async def seeds(message: Message):
         answer += "\n" + _("Use /plant <seed_stock_id> to plant one seed.")
 
     await message.answer(str(answer))
-
-
 
 
 @dp.message(Command("addseeds"))
@@ -228,12 +224,16 @@ async def add_seeds(message: Message):
     updated = await stock_qs.aupdate(quantity=F("quantity") + quantity)
 
     if updated == 0:
-        await SeedStock.objects.acreate(
-            user=tg_user.user,
-            type=plant_type,
-            variety=variety,
-            quantity=quantity,
-        )
+        try:
+            await SeedStock.objects.acreate(
+                user=tg_user.user,
+                type=plant_type,
+                variety=variety,
+                quantity=quantity,
+            )
+        except IntegrityError:
+            # Row was inserted concurrently; apply increment to the existing row.
+            await stock_qs.aupdate(quantity=F("quantity") + quantity)
 
     stock = await stock_qs.select_related("type", "variety").aget()
 

@@ -218,10 +218,10 @@ class SeedStock(models.Model):
         verbose_name=_("Сорт"),
         on_delete=models.RESTRICT,
         related_name="seed_stocks",
-        null=True,
-        blank=True,
     )
-    quantity = models.PositiveIntegerField(verbose_name=_("Количество семян"), default=0)
+    quantity = models.PositiveIntegerField(
+        verbose_name=_("Количество семян"), default=0
+    )
 
     class Meta:
         verbose_name = _("Запас семян")
