@@ -31,8 +31,8 @@ class PlantTypeOperationsInline(admin.TabularInline):
 
 @admin.register(PlantType)
 class PlantTypeAdmin(admin.ModelAdmin):
-    fields = ("name", "slug", "description", "planting_period", "duration_days")
-    list_display = ("name", "slug", "planting_period", "duration_days")
+    fields = ("name", "slug", "description", "sowing_period", "planting_period", "duration_days")
+    list_display = ("name", "slug", "sowing_period", "planting_period", "duration_days")
     ordering = ("name",)
     prepopulated_fields = {"slug": ("name",)}
     search_fields = ("name",)
@@ -47,10 +47,11 @@ class PlantVarietyAdmin(admin.ModelAdmin):
         "name",
         "slug",
         "description",
+        "sowing_period",
         "planting_period",
         "duration_days",
     )
-    list_display = ("full_name", "type", "planting_period", "duration_days")
+    list_display = ("full_name", "type", "sowing_period", "planting_period", "duration_days")
     list_filter = ("type",)
     ordering = ("type__name", "name")
     prepopulated_fields = {"slug": ("name",)}
