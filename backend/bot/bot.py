@@ -168,7 +168,7 @@ async def seeds(message: Message):
         answer = _("Your seed stock is empty.")
     else:
         answer += "\n" + _(
-            "Use /addseeds <type_slug> <quantity> [variety_slug] to add seeds."
+            "Use /addseeds <type_slug> <quantity> <variety_slug> to add seeds."
         )
         answer += "\n" + _("Use /plant <seed_stock_id> to plant one seed.")
 
@@ -182,15 +182,15 @@ async def add_seeds(message: Message):
         return
 
     parts = (message.text or "").split()
-    if len(parts) not in (3, 4) or not parts[2].isdigit():
+    if len(parts) != 4 or not parts[2].isdigit():
         await message.answer(
-            str(_("Usage: /addseeds <type_slug> <quantity> [variety_slug]"))
+            str(_("Usage: /addseeds <type_slug> <quantity> <variety_slug>"))
         )
         return
 
     type_slug = parts[1].strip().lower()
     quantity = int(parts[2].strip())
-    variety_slug = parts[3].strip().lower() if len(parts) == 4 else None
+    variety_slug = parts[3].strip().lower()
 
     if quantity <= 0:
         await message.answer(str(_("Quantity must be greater than 0.")))
@@ -202,15 +202,11 @@ async def add_seeds(message: Message):
         await message.answer(str(_("Plant type not found.")))
         return
 
-    variety = None
-    if variety_slug:
-        try:
-            variety = await PlantVariety.objects.aget(
-                type=plant_type, slug=variety_slug
-            )
-        except PlantVariety.DoesNotExist:
-            await message.answer(str(_("Plant variety not found for this type.")))
-            return
+    try:
+        variety = await PlantVariety.objects.aget(type=plant_type, slug=variety_slug)
+    except PlantVariety.DoesNotExist:
+        await message.answer(str(_("Plant variety not found for this type.")))
+        return
 
     tg_user = await TelegramUser.objects.select_related("user").aget(
         id=message.from_user.id
