@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "catalogs.apps.CatalogsConfig",
     "diary.apps.DiaryConfig",
     "bot.apps.BotConfig",
+    "llm.apps.LlmConfig",
 ]
 
 if DEBUG:
@@ -176,3 +177,10 @@ BOT_TOKEN = env("BOT_TOKEN")
 BOT_WEBHOOK_URL = env("BOT_WEBHOOK_URL", default=None)
 BOT_WEBHOOK_TOKEN = env("BOT_WEBHOOK_TOKEN", default=None)
 BOT_DROP_PENDING_UPDATES = env.bool("BOT_DROP_PENDING_UPDATES", default=True)
+
+# LLM providers
+
+OPENROUTER_API_KEY = env("OPENROUTER_API_KEY", default="")
+LLM_DEFAULT_MODEL = env("LLM_DEFAULT_MODEL", default="openai/gpt-4o-mini")
+LLM_REQUEST_TIMEOUT_SECONDS = env.int("LLM_REQUEST_TIMEOUT_SECONDS", default=30)
+LLM_MAX_RETRIES = env.int("LLM_MAX_RETRIES", default=2)
