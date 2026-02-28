@@ -108,9 +108,32 @@ The application can be configured using environment variables in the `.env` file
 * `DATABASE_URL`: Database URL (default: sqlite:////app/db.sqlite3)
 * `LANGUAGE_CODE`: Language code (default: "ru-ru")
 * `TIME_ZONE`: Time zone (default: "UTC")
-* `BOT_WEBHOOK_TOKEN`: Telegram bot webhook token (optional)
+* `BOT_MODE`: Bot delivery mode, either `webhook` (default) or `polling`
+* `BOT_WEBHOOK_URL`: Public Telegram webhook URL (required for webhook mode)
+* `BOT_WEBHOOK_TOKEN`: Telegram bot webhook token (optional, recommended for webhook mode)
+* `BOT_DROP_PENDING_UPDATES`: Drop pending Telegram updates when switching mode (default: True)
 
 Additional configuration options are available in `backend/core/settings.py`.
+
+### Bot runtime modes
+
+The bot can run in two modes:
+
+* **Webhook mode** (`BOT_MODE=webhook`, default): Django serves `/bot/` webhook endpoint and startup attempts to register `BOT_WEBHOOK_URL` in Telegram.
+* **Polling mode** (`BOT_MODE=polling`): intended primarily for local debugging and development, no public webhook URL is required, and startup removes the webhook before polling.
+
+Examples:
+
+```sh
+# webhook mode
+BOT_MODE=webhook
+BOT_WEBHOOK_URL=https://example.com/bot/
+BOT_WEBHOOK_TOKEN=your_secret_token
+
+# polling mode (debug)
+BOT_MODE=polling
+```
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
