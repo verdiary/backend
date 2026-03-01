@@ -173,4 +173,6 @@ EMAIL_FILE_PATH = "/tmp/app-messages"
 # Telegram Bot
 
 BOT_TOKEN = env("BOT_TOKEN")
+BOT_WEBHOOK_URL = env("BOT_WEBHOOK_URL", default=None)
 BOT_WEBHOOK_TOKEN = env("BOT_WEBHOOK_TOKEN", default=None)
+BOT_DROP_PENDING_UPDATES = env.bool("BOT_DROP_PENDING_UPDATES", default=True)
