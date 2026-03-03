@@ -3,6 +3,9 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+PLANTING_PERIOD_REGEX = r"^(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)-(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$"
+
+
 class Step(models.TextChoices):
     SEED_PREPARATION = "10-seed_preparation", _("🌱🛠️ Подготовка семян")
     SOWING = "20-sowing", _("🌱👐 Посев")
@@ -30,6 +33,21 @@ class PlantType(models.Model):
     name = models.CharField(verbose_name=_("Наименование"), max_length=128)
     description = models.TextField(verbose_name=_("Описание"))
 
+    sowing_period = models.CharField(
+        verbose_name=_("Период посадки"),
+        max_length=16,
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=PLANTING_PERIOD_REGEX,
+                message=_(
+                    "Неверный формат периода посадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
+                ),
+            ),
+        ],
+    )
+
     planting_period = models.CharField(
         verbose_name=_("Период высадки"),
         max_length=16,
@@ -37,7 +55,7 @@ class PlantType(models.Model):
         blank=True,
         validators=[
             RegexValidator(
-                regex=r"^(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)-(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$",
+                regex=PLANTING_PERIOD_REGEX,
                 message=_(
                     "Неверный формат периода высадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
                 ),
@@ -69,6 +87,21 @@ class PlantVariety(models.Model):
     name = models.CharField(verbose_name=_("Наименование"), max_length=128)
     description = models.TextField(verbose_name=_("Описание"))
 
+    sowing_period = models.CharField(
+        verbose_name=_("Период посадки"),
+        max_length=16,
+        null=True,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=PLANTING_PERIOD_REGEX,
+                message=_(
+                    "Неверный формат периода посадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
+                ),
+            ),
+        ],
+    )
+
     planting_period = models.CharField(
         verbose_name=_("Период высадки"),
         max_length=16,
@@ -76,7 +109,7 @@ class PlantVariety(models.Model):
         blank=True,
         validators=[
             RegexValidator(
-                regex=r"^(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)-(0[1-9]|[12][0-9]|3[01])\.(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$",
+                regex=PLANTING_PERIOD_REGEX,
                 message=_(
                     "Неверный формат периода высадки. Используйте формат 'DD.MM-DD.MM', где MM - месяц в римской записи (I-XII)."
                 ),
