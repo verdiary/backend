@@ -6,6 +6,7 @@ from catalogs.models import PlantOperation, Step
 from django.conf import settings
 from django.db import models
 from django.utils.functional import cached_property
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from timezone_field import TimeZoneField
 
@@ -146,28 +147,15 @@ class Plant(models.Model):
             self.name = self.type.name
             if self.variety:
                 self.name += f" {self.variety.name}"
-            self.name += f" ({date.today().strftime('%Y-%m-%d')})"
+            self.name += f" ({timezone.localdate().strftime('%Y-%m-%d')})"
         super().save(*args, **kwargs)
 
-    @property
-    def planting_period(self):
-        if self.variety and self.variety.planting_period:
-            return self.variety.planting_period
-        return self.type.planting_period
-
-    @cached_property
-    def parsed_planting_period(self):
-        """
-        Parses the planting_period string in 'DD.MM-DD.MM' format into a tuple of start and end dates.
-
-        Returns:
-            tuple: A tuple containing the start and end dates as datetime.date objects, or None if parsing fails.
-        """
-        period = self.planting_period
+    @staticmethod
+    def _parse_period(period: Optional[str], plant_id: Optional[int], period_name: str):
         if not period:
             return None
 
-        romanian_months = {
+        roman_months = {
             "I": 1,
             "II": 2,
             "III": 3,
@@ -187,14 +175,47 @@ class Plant(models.Model):
             start_day, start_month = start_str.split(".")
             end_day, end_month = end_str.split(".")
 
-            today = date.today()
-            start_date = date(today.year, romanian_months[start_month], int(start_day))
-            end_date = date(today.year, romanian_months[end_month], int(end_day))
+            today = timezone.localdate()
+            start_day_i = int(start_day)
+            end_day_i = int(end_day)
+            start_month_i = roman_months[start_month]
+            end_month_i = roman_months[end_month]
+
+            wraps_year = (end_month_i, end_day_i) < (start_month_i, start_day_i)
+            start_year = today.year
+            end_year = today.year
+
+            if wraps_year:
+                if (today.month, today.day) <= (end_month_i, end_day_i):
+                    # We are in Jan/Feb part of a wrapped period: active range started last year.
+                    start_year -= 1
+                else:
+                    # We are in/approaching Nov-Dec side: end falls next year.
+                    end_year += 1
+
+            start_date = date(start_year, start_month_i, start_day_i)
+            end_date = date(end_year, end_month_i, end_day_i)
 
             return start_date, end_date
-        except (ValueError, KeyError):
-            logger.warning("Failed to parse planting period for plant %s", self.id)
+        except (ValueError, KeyError) as exc:
+            logger.warning(
+                "Failed to parse %s for plant %s: value=%r error=%s",
+                period_name,
+                plant_id,
+                period,
+                exc,
+            )
             return None
+
+    @property
+    def planting_period(self):
+        if self.variety and self.variety.planting_period:
+            return self.variety.planting_period
+        return self.type.planting_period
+
+    @cached_property
+    def parsed_planting_period(self):
+        return self._parse_period(self.planting_period, self.id, "planting period")
 
     def __str__(self):
         return f"{self.name}"

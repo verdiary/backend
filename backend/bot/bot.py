@@ -172,6 +172,6 @@ async def planting(message: Message):
         answer += f"  {_('Planned planting period')}: {plant.planting_period}\n"
 
     if not plants_found:
-        answer = _("You don't have any plants yet.")
+        answer = _("No plants are ready for transplanting right now.")
 
     await message.answer(str(answer))
