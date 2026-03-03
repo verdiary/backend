@@ -144,7 +144,7 @@ async def planting(message: Message):
         logger.warning("Received message without user information")
         return
 
-    answer = _("Your future plantings:") + "\n"
+    answer = _("Your plants ready for transplanting:") + "\n"
 
     plants_found = False
     now = timezone.localdate()
@@ -164,12 +164,12 @@ async def planting(message: Message):
             continue
 
         start_date, end_date = parsed_period
-        if end_date < now:
+        if now < start_date or end_date < now:
             continue
 
         plants_found = True
         answer += f"\n🌱 {plant.name}\n"
-        answer += f"  {_('Planned planting period')}: {plant.planting_period}\n"
+        answer += f"  {_('Planned transplanting period')}: {plant.planting_period}\n"
 
     if not plants_found:
         answer = _("No plants are ready for transplanting right now.")
