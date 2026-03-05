@@ -69,6 +69,10 @@ class PlantAdmin(admin.ModelAdmin):
     def variety_name(self, obj):
         return obj.variety
 
+    @admin.display(description=_("Период высадки"))
+    def planting_period(self, obj):
+        return obj.planting_period
+
     @admin.display(description=_("Дата сбора"))
     def planned_harvest_date(self, obj):
         return obj.planned_harvest_date
