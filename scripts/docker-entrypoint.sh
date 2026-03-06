@@ -7,7 +7,6 @@ HOST=${HOST:-0.0.0.0}
 BOT_MODE=${BOT_MODE:-webhook}
 
 python manage.py migrate
-python manage.py syncbot
 
 case "$BOT_MODE" in
   webhook)
